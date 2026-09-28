@@ -394,6 +394,7 @@
 
   /* ---------- booking form ---------- */
   .form-shell{display:grid; grid-template-columns:.9fr 1.1fr; gap:var(--s5); align-items:start;}
+  .form-shell > *{min-width:0;}
   .form-copy h2{margin-bottom:var(--s2);}
   .form-copy p{color:#5b5138; max-width:40ch;}
   .form-note{
@@ -739,7 +740,7 @@
         <button class="cat-tab" data-filter="location" type="button">À louer</button>
       </div>
 
-      <div class="vgrid reveal" id="vGrid"></div>
+      <div class="vgrid" id="vGrid"></div>
     </div>
   </section>
 
