@@ -519,6 +519,12 @@
     *{scroll-behavior:auto !important;}
   }
 
+  /* ---------- hero route animation ---------- */
+  @media (prefers-reduced-motion: no-preference){
+    .route-arc{animation:routeDash 1s linear infinite;}
+  }
+  @keyframes routeDash{ to{ stroke-dashoffset:-14; } }
+
   html{scroll-behavior:smooth;}
   [id]{scroll-margin-top:90px;}
 </style>
@@ -590,16 +596,24 @@
               <stop offset="100%" stop-color="#10141a"/>
             </radialGradient>
           </defs>
-          <path d="M40 210 C 110 90, 250 90, 320 210" stroke="#e7ac46" stroke-width="2" stroke-dasharray="6 8" fill="none" opacity=".8"/>
+          <path class="route-arc" d="M40 210 C 110 90, 250 90, 320 210" stroke="#e7ac46" stroke-width="2" stroke-dasharray="6 8" fill="none" opacity=".8"/>
           <g transform="translate(300,190) rotate(35)">
-            <path d="M0 0 L20 6 L0 12 L5 6 Z" fill="#e7ac46"/>
+            <path d="M0 0 L20 6 L0 12 L5 6 Z" fill="#e7ac46">
+              <animate attributeName="opacity" values=".6;1;.6" dur="2.4s" repeatCount="indefinite"/>
+            </path>
           </g>
+          <circle cx="40" cy="210" r="5" fill="none" stroke="#399478" stroke-width="2">
+            <animate attributeName="r" values="5;17" dur="2.2s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values=".7;0" dur="2.2s" repeatCount="indefinite"/>
+          </circle>
           <circle cx="40" cy="210" r="5" fill="#399478"/>
-          <g transform="translate(150,232)">
-            <rect x="0" y="10" width="80" height="22" rx="8" fill="#efe3c8"/>
-            <rect x="12" y="-6" width="56" height="20" rx="8" fill="#efe3c8"/>
-            <circle cx="18" cy="34" r="7" fill="#10141a"/>
-            <circle cx="62" cy="34" r="7" fill="#10141a"/>
+          <g id="routeCar">
+            <rect x="-40" y="-7" width="80" height="22" rx="8" fill="#efe3c8"/>
+            <rect x="-28" y="-23" width="56" height="20" rx="8" fill="#efe3c8"/>
+            <circle cx="-22" cy="17" r="7" fill="#10141a"/>
+            <circle cx="22" cy="17" r="7" fill="#10141a"/>
+            <animateMotion dur="7s" repeatCount="indefinite" calcMode="linear" keyPoints="0;1;1" keyTimes="0;0.78;1" path="M40 210 C 110 90, 250 90, 320 210"/>
+            <animate attributeName="opacity" values="0;1;1;0;0" keyTimes="0;0.06;0.72;0.8;1" dur="7s" calcMode="linear" repeatCount="indefinite"/>
           </g>
           <text x="40" y="235" font-family="Space Mono, monospace" font-size="13" fill="#b9c0c9">DKR</text>
           <text x="292" y="235" font-family="Space Mono, monospace" font-size="13" fill="#b9c0c9">AIBD</text>
@@ -1038,6 +1052,10 @@
 
   try{
     var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if(reduce){
+      var routeSvg = document.querySelector('.route-svg');
+      if(routeSvg && typeof routeSvg.pauseAnimations === 'function'){ routeSvg.pauseAnimations(); }
+    }
     var items = document.querySelectorAll('.reveal');
     if(reduce || !('IntersectionObserver' in window)){
       items.forEach(function(el){ el.classList.add('in'); });
