@@ -1,0 +1,17 @@
+{
+  "name": "Auto-Connect Teranga",
+  "short_name": "AC Teranga",
+  "description": "Transfert Dakar ⇄ Aéroport AIBD, achat et location de véhicules à Dakar.",
+  "start_url": "../auto-connect-teranga.html",
+  "scope": "../",
+  "display": "standalone",
+  "background_color": "#10141a",
+  "theme_color": "#10141a",
+  "lang": "fr",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

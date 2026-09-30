@@ -19,7 +19,7 @@ var lightbox, lightboxImg, lbPhotos = [], lbIndex = 0;
 
 function updateLightboxImg(){
   lightboxImg.src = lbPhotos[lbIndex];
-  lightboxImg.alt = 'Photo ' + (lbIndex + 1) + ' sur ' + lbPhotos.length;
+  lightboxImg.alt = 'Photo ' + (lbIndex + 1) + ' / ' + lbPhotos.length;
 }
 function openLightbox(photos, index){
   lbPhotos = photos;
@@ -78,20 +78,24 @@ function renderVehicleGallery(v){
     return;
   }
 
+  var photoWord = 'photo';
+  var videoWord = window.I18N && I18N.getLang() === 'en' ? 'video' : 'vidéo';
   var imgs = photoCount ? v.photos.map(function(src, pi){
-    return '<img src="' + src + '" alt="' + v.name + ' — photo ' + (pi + 1) + '" data-idx="' + pi + '" loading="lazy">';
+    return '<img src="' + src + '" alt="' + v.name + ' — ' + photoWord + ' ' + (pi + 1) + '" data-idx="' + pi + '" loading="lazy">';
   }).join('') : '';
   var videoSlides = videoList.map(function(src){
     return '<div class="vvideo-wrap">' +
-      '<video src="' + src + '" muted preload="metadata" playsinline controls disablepictureinpicture disableremoteplayback oncontextmenu="return false" aria-label="' + v.name + ' — vidéo"></video>' +
+      '<video src="' + src + '" muted preload="metadata" playsinline controls disablepictureinpicture disableremoteplayback oncontextmenu="return false" aria-label="' + v.name + ' — ' + videoWord + '"></video>' +
     '</div>';
   }).join('');
   var dots = '';
   for(var di = 0; di < slideCount; di++){ dots += '<span class="' + (di === 0 ? 'active' : '') + '"></span>'; }
+  var prevLabel = window.I18N ? I18N.t('vp.gallery_prev') : 'Précédent';
+  var nextLabel = window.I18N ? I18N.t('vp.gallery_next') : 'Suivant';
   vpGallery.innerHTML =
     '<div class="vgallery-track">' + imgs + videoSlides + '</div>' +
-    (slideCount > 1 ? '<button type="button" class="vgallery-btn prev" aria-label="Précédent">&#8249;</button>' +
-    '<button type="button" class="vgallery-btn next" aria-label="Suivant">&#8250;</button>' +
+    (slideCount > 1 ? '<button type="button" class="vgallery-btn prev" aria-label="' + prevLabel + '">&#8249;</button>' +
+    '<button type="button" class="vgallery-btn next" aria-label="' + nextLabel + '">&#8250;</button>' +
     '<div class="vgallery-dots">' + dots + '</div>' : '');
 
   var track = vpGallery.querySelector('.vgallery-track');
@@ -149,7 +153,12 @@ function loadVehicleMedia(v){
 
 function renderVehiclePageMeta(v){
   var badgeClass = v.mode === 'vente' ? 'sale' : 'rent';
-  var badgeLabel = v.mode === 'vente' ? 'À vendre' : 'À louer';
+  var badgeLabel = window.I18N ? I18N.modeLabel(v.mode) : (v.mode === 'vente' ? 'À vendre' : 'À louer');
+  var seatsWord = window.I18N ? I18N.t('vp.seats_word') : 'places';
+  var gearbox = window.I18N ? I18N.translateGearbox(v.gearbox) : v.gearbox;
+  var fuel = window.I18N ? I18N.translateFuel(v.fuel) : v.fuel;
+  var colorName = window.I18N ? I18N.translateColor(v.colorName) : v.colorName;
+  var note = window.I18N ? I18N.translateNote(v.note) : v.note;
   var vpBadge = document.getElementById('vpBadge');
   var vpName = document.getElementById('vpName');
   var vpSpecs = document.getElementById('vpSpecs');
@@ -160,19 +169,20 @@ function renderVehiclePageMeta(v){
   vpBadge.className = 'vcard-badge vp-badge ' + badgeClass;
   vpBadge.textContent = badgeLabel;
   vpName.textContent = v.name;
-  vpSpecs.textContent = v.year + ' · ' + v.gearbox + ' · ' + v.seats + ' places · ' + v.fuel + ' · ' + v.colorName;
+  vpSpecs.textContent = v.year + ' · ' + gearbox + ' · ' + v.seats + ' ' + seatsWord + ' · ' + fuel + ' · ' + colorName;
 
   vpFeatures.innerHTML = '';
-  if(v.note){
-    v.note.split('·').map(function(s){ return s.trim(); }).filter(Boolean).forEach(function(feat){
+  if(note){
+    note.split('·').map(function(s){ return s.trim(); }).filter(Boolean).forEach(function(feat){
       var li = document.createElement('li');
       li.textContent = feat;
       vpFeatures.appendChild(li);
     });
   }
 
-  vpPrice.innerHTML = v.price ? (v.price + '<small>' + v.unit + '</small>') : '<small>Prix sur demande</small>';
-  var msg = 'Bonjour Auto-Connect Teranga, le véhicule ' + v.name + ' (' + badgeLabel.toLowerCase() + ') m’intéresse.';
+  var noPriceLabel = window.I18N ? I18N.t('vp.no_price') : 'Prix sur demande';
+  vpPrice.innerHTML = v.price ? (v.price + '<small>' + v.unit + '</small>') : ('<small>' + noPriceLabel + '</small>');
+  var msg = window.I18N ? I18N.cardMsg(v.name, v.mode) : ('Bonjour Auto-Connect Teranga, le véhicule ' + v.name + ' (' + badgeLabel.toLowerCase() + ') m’intéresse.');
   vpContact.onclick = function(){
     var number = WA_NUMBERS[Math.floor(Math.random() * WA_NUMBERS.length)];
     openWhatsApp(number, msg);
@@ -182,6 +192,15 @@ function renderVehiclePageMeta(v){
 function initVehiclePage(v){
   vpGallery = document.getElementById('vpGallery');
   vpThumbs = document.getElementById('vpThumbs');
+
+  if(window.I18N){
+    I18N.applyStatic(document);
+    I18N.initLangToggle();
+    I18N.onChange(function(){
+      renderVehiclePageMeta(v);
+      renderVehicleGallery(v);
+    });
+  }
 
   initLightbox();
 
@@ -198,8 +217,9 @@ function initVehiclePage(v){
   }
 
   renderVehiclePageMeta(v);
+  var loadingLabel = window.I18N ? I18N.t('vp.loading') : 'Chargement des photos…';
   vpGallery.innerHTML = v.thumb ?
-    '<div class="vgallery-track"><img src="' + v.thumb + '" alt="' + v.name + '"></div><div class="vp-loading-badge">Chargement des photos…</div>' : '';
+    '<div class="vgallery-track"><img src="' + v.thumb + '" alt="' + v.name + '"></div><div class="vp-loading-badge">' + loadingLabel + '</div>' : '';
 
   loadVehicleMedia(v).then(function(){
     renderVehicleGallery(v);
