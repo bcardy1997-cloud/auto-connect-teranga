@@ -567,10 +567,6 @@
 
   try{
     var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if(reduce){
-      var routeSvg = document.querySelector('.route-svg');
-      if(routeSvg && typeof routeSvg.pauseAnimations === 'function'){ routeSvg.pauseAnimations(); }
-    }
     var items = document.querySelectorAll('.reveal');
     if(reduce || !('IntersectionObserver' in window)){
       items.forEach(function(el){ el.classList.add('in'); });
