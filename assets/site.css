@@ -523,9 +523,10 @@
   }
 
   /* ---------- hero route animation ---------- */
-  @media (prefers-reduced-motion: no-preference){
-    .route-arc{animation:routeDash 1s linear infinite;}
-  }
+  /* Cette animation d'illustration (trajet DKR -> AIBD) reste active meme si
+     l'appareil du visiteur demande "reduced motion" : elle fait partie de
+     l'identite visuelle de la page d'accueil. */
+  .route-arc{animation:routeDash 1s linear infinite;}
   @keyframes routeDash{ to{ stroke-dashoffset:-14; } }
 
   html{scroll-behavior:smooth;}
