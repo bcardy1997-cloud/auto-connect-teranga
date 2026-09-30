@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://bcardy1997-cloud.github.io/auto-connect-teranga/sitemap.xml
