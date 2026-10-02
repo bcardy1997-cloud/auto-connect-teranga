@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Migration — Auto-Connect Teranga</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  :root{ --bg:#0e1319; --panel:#171e27; --panel2:#1e2733; --border:#2a3542; --text:#eef1f4; --muted:#9aa7b4; --gold:#e7ac46; --red:#c9524a; --green:#399478; }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif; background:var(--bg); color:var(--text);}
+  .wrap{max-width:720px; margin:0 auto; padding:40px 20px 80px;}
+  h1{font-size:22px; margin:0 0 6px;}
+  p.lead{color:var(--muted); font-size:14px; margin:0 0 28px;}
+  .card{background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:24px;}
+  label{display:block; font-size:13px; color:var(--muted); margin:14px 0 6px;}
+  input[type=email], input[type=password]{
+    width:100%; background:var(--panel2); border:1px solid var(--border); border-radius:8px;
+    padding:11px 12px; color:var(--text); font-size:15px;
+  }
+  .btn{border:none; border-radius:999px; padding:11px 20px; font-size:14px; font-weight:600; cursor:pointer; background:var(--gold); color:#1a140a;}
+  .btn:disabled{opacity:.5; cursor:not-allowed;}
+  .btn-outline{background:transparent; color:var(--text); border:1px solid var(--border);}
+  .error-msg{background:rgba(201,82,74,.12); border:1px solid rgba(201,82,74,.35); color:#f2a39d; border-radius:8px; padding:10px 12px; font-size:13px; margin-top:14px; display:none;}
+  .error-msg.show{display:block;}
+  .warn{background:rgba(231,172,70,.12); border:1px solid rgba(231,172,70,.4); color:var(--gold); border-radius:8px; padding:12px 14px; font-size:13px; margin:18px 0;}
+  #log{
+    margin-top:20px; background:#0a0d11; border:1px solid var(--border); border-radius:8px;
+    padding:14px; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12.5px; max-height:420px;
+    overflow-y:auto; white-space:pre-wrap; line-height:1.6;
+  }
+  .ok{color:var(--green);}
+  .fail{color:var(--red);}
+  .progress-bar{height:8px; background:var(--panel2); border-radius:999px; overflow:hidden; margin-top:16px;}
+  .progress-bar > div{height:100%; background:var(--gold); width:0%; transition:width .2s;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Migration des véhicules vers la base de données</h1>
+  <p class="lead">Outil à usage unique : transfère les 32 véhicules actuels (photos incluses) vers Firestore + Cloudinary. Connectez-vous avec un compte admin pour continuer.</p>
+
+  <div class="card">
+    <div id="loginBlock">
+      <label for="email">Email</label>
+      <input type="email" id="email" autocomplete="username">
+      <label for="password">Mot de passe</label>
+      <input type="password" id="password" autocomplete="current-password">
+      <div class="error-msg" id="loginError"></div>
+      <button class="btn" id="loginBtn" style="margin-top:18px">Se connecter</button>
+    </div>
+
+    <div id="runBlock" style="display:none">
+      <p id="whoami" style="color:var(--muted); font-size:13px;"></p>
+      <div class="warn" id="existingWarn" style="display:none"></div>
+      <button class="btn" id="startBtn">Lancer la migration</button>
+      <button class="btn btn-outline" id="cancelLoginBtn" style="margin-left:8px">Déconnexion</button>
+      <div class="progress-bar"><div id="progressFill"></div></div>
+      <div id="log"></div>
+    </div>
+  </div>
+</div>
+
+<script src="assets/act-config.js"></script>
+<script src="assets/act-cloudinary.js"></script>
+<script type="module" src="assets/act-firebase.js"></script>
+<script type="module">
+  var FB = window.ACT_FB;
+  var auth = FB.auth, db = FB.db;
+
+  var loginBlock = document.getElementById('loginBlock');
+  var runBlock = document.getElementById('runBlock');
+  var loginError = document.getElementById('loginError');
+  var whoami = document.getElementById('whoami');
+  var logEl = document.getElementById('log');
+  var progressFill = document.getElementById('progressFill');
+  var existingWarn = document.getElementById('existingWarn');
+
+  function log(msg, cls){
+    var line = document.createElement('div');
+    if(cls) line.className = cls;
+    line.textContent = msg;
+    logEl.appendChild(line);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  FB.onAuthStateChanged(auth, function(user){
+    if(user && window.ACT_CONFIG.adminEmails.indexOf(user.email) !== -1){
+      loginBlock.style.display = 'none';
+      runBlock.style.display = 'block';
+      whoami.textContent = 'Connecté : ' + user.email;
+      checkExisting();
+    } else if(user){
+      FB.signOut(auth);
+      loginError.textContent = 'Ce compte n\'a pas accès à cet outil.';
+      loginError.classList.add('show');
+    } else {
+      loginBlock.style.display = 'block';
+      runBlock.style.display = 'none';
+    }
+  });
+
+  document.getElementById('loginBtn').addEventListener('click', function(){
+    loginError.classList.remove('show');
+    var email = document.getElementById('email').value.trim();
+    var password = document.getElementById('password').value;
+    FB.signInWithEmailAndPassword(auth, email, password).catch(function(err){
+      loginError.textContent = 'Email ou mot de passe incorrect.';
+      loginError.classList.add('show');
+    });
+  });
+  document.getElementById('cancelLoginBtn').addEventListener('click', function(){ FB.signOut(auth); });
+
+  function checkExisting(){
+    FB.getDocs(FB.collection(db, 'vehicles')).then(function(snap){
+      if(!snap.empty){
+        existingWarn.style.display = 'block';
+        existingWarn.textContent = 'Attention : la base contient déjà ' + snap.size + ' véhicule(s). Relancer la migration créera des doublons. N\'utilisez ce bouton qu\'une seule fois.';
+      }
+    });
+  }
+
+  document.getElementById('startBtn').addEventListener('click', function(){
+    this.disabled = true;
+    runMigration().catch(function(err){
+      log('Erreur fatale : ' + err.message, 'fail');
+    });
+  });
+
+  function runMigration(){
+    return fetch('migration-data.json').then(function(r){ return r.json(); }).then(function(list){
+      log('Chargé ' + list.length + ' véhicules à migrer.');
+      return list.reduce(function(chain, entry, idx){
+        return chain.then(function(){
+          progressFill.style.width = Math.round((idx / list.length) * 100) + '%';
+          return migrateOne(entry, idx, list.length);
+        });
+      }, Promise.resolve());
+    }).then(function(){
+      progressFill.style.width = '100%';
+      log('Migration terminée ✓', 'ok');
+      log('Vous pouvez maintenant supprimer migrate.html et migration-data.json de votre site (optionnel).');
+    });
+  }
+
+  function migrateOne(entry, idx, total){
+    log('[' + (idx+1) + '/' + total + '] ' + entry.name + ' — récupération des photos…');
+    return fetch(entry.data).then(function(r){
+      if(!r.ok) throw new Error('data introuvable : ' + entry.data);
+      return r.json();
+    }).then(function(media){
+      var photos = media.photos || [];
+      var videos = media.videos || [];
+      var photoUrls = [], videoUrls = [];
+      var uploadChain = Promise.resolve();
+      photos.forEach(function(dataUri){
+        uploadChain = uploadChain.then(function(){
+          return window.ACT_cldUploadBase64(dataUri, 'image').then(function(url){
+            photoUrls.push(url);
+          });
+        });
+      });
+      videos.forEach(function(dataUri){
+        uploadChain = uploadChain.then(function(){
+          return window.ACT_cldUploadBase64(dataUri, 'video').then(function(url){
+            videoUrls.push(url);
+          });
+        });
+      });
+      return uploadChain.then(function(){
+        log('   ' + photoUrls.length + ' photo(s), ' + videoUrls.length + ' vidéo(s) envoyées.');
+        var doc = {
+          name: entry.name, brand: entry.brand, mode: entry.mode, type: entry.type,
+          color: entry.color, year: entry.year, gearbox: entry.gearbox, seats: entry.seats,
+          fuel: entry.fuel, colorName: entry.colorName, note: entry.note,
+          price: entry.price, unit: entry.unit, slug: entry.slug,
+          photos: photoUrls, videos: videoUrls,
+          createdAt: FB.serverTimestamp(), updatedAt: FB.serverTimestamp()
+        };
+        return FB.addDoc(FB.collection(db, 'vehicles'), doc);
+      });
+    }).then(function(){
+      log('   ✓ enregistré dans Firestore', 'ok');
+    }).catch(function(err){
+      log('   ✗ échec : ' + err.message, 'fail');
+    });
+  }
+</script>
+</body>
+</html>
