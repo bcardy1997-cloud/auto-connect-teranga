@@ -557,6 +557,7 @@
       </div>
       <div class="vp-info">
         <span class="vcard-badge vp-badge" id="vpBadge"></span>
+        <div class="vp-flags" id="vpFlags"></div>
         <h1 id="vpName"></h1>
         <p class="vp-specs" id="vpSpecs"></p>
         <ul class="vp-features" id="vpFeatures"></ul>
@@ -589,6 +590,7 @@
 </a>
 
 <script src="assets/i18n.js"></script>
+<script src="assets/act-extras.js"></script>
 <script>
 (function(){
   if(window.I18N){
@@ -706,10 +708,10 @@
       return '' +
         '<div class="testi-card">' +
           stars +
-          '<p class="testi-text">“' + t.text + '”</p>' +
+          '<p class="testi-text">“' + ACT_EXTRAS.esc(t.text) + '”</p>' +
           '<div class="testi-foot">' +
-            '<span class="testi-name">' + t.name + '</span>' +
-            (t.context ? '<span class="testi-context">' + t.context + '</span>' : '') +
+            '<span class="testi-name">' + ACT_EXTRAS.esc(t.name) + '</span>' +
+            (t.context ? '<span class="testi-context">' + ACT_EXTRAS.esc(t.context) + '</span>' : '') +
           '</div>' +
         '</div>';
     }).join('');
@@ -736,10 +738,11 @@
       }
       var slug = vehicleSlug(v, vi);
       return '' +
-        '<article class="vcard" data-mode="' + v.mode + '" data-vindex="' + vi + '">' +
+        '<article class="vcard' + (ACT_EXTRAS.isUnavailable(v) ? ' is-sold' : '') + '" data-mode="' + v.mode + '" data-vindex="' + vi + '">' +
           '<a class="vcard-link" href="vehicules/fiche.html?v=' + encodeURIComponent(slug) + '" style="display:contents">' +
             '<div class="vcard-art">' +
               '<span class="vcard-badge ' + badgeClass + '">' + badgeLabel + '</span>' +
+              '<div class="act-flags">' + ACT_EXTRAS.flagsHtml(v) + '</div>' +
               artHtml +
             '</div>' +
             '<div class="vcard-body">' +
@@ -747,7 +750,7 @@
               '<p class="vcard-specs">' + v.year + ' &middot; ' + gearbox + ' &middot; ' + v.seats + ' ' + seatsWord + ' &middot; ' + fuel + ' &middot; ' + colorName + '</p>' +
               (note ? '<p class="vcard-note">' + note + '</p>' : '') +
               '<div class="vcard-bottom' + (v.price ? '' : ' solo') + '">' +
-                (v.price ? '<span class="vcard-price">' + v.price + '<small>' + v.unit + '</small></span>' : '') +
+                (v.price ? '<span class="vcard-price">' + v.price + '<small>' + v.unit + '</small>' + (ACT_EXTRAS.eurText(v) ? '<span class="act-eur">' + ACT_EXTRAS.eurText(v) + '</span>' : '') + '</span>' : '') +
                 '<button class="btn ' + (v.price ? 'btn-outline btn-sm' : 'btn-gold btn-block') + ' vcard-cta" type="button" data-msg="' + msg.replace(/"/g,'&quot;') + '">Contacter</button>' +
               '</div>' +
             '</div>' +
@@ -760,6 +763,9 @@
         e.preventDefault();
         e.stopPropagation();
         var number = WA_NUMBERS[Math.floor(Math.random() * WA_NUMBERS.length)];
+        var cardEl = btn.closest('.vcard');
+        var cv = cardEl ? VEHICLES[parseInt(cardEl.getAttribute('data-vindex'), 10)] : null;
+        if(cv) ACT_EXTRAS.track(vehicleSlug(cv, parseInt(cardEl.getAttribute('data-vindex'), 10)), 'waClicks');
         openWhatsApp(number, btn.getAttribute('data-msg'));
       });
     });
@@ -969,10 +975,19 @@
     }
 
     var noPriceLabel = window.I18N ? I18N.t('vp.no_price') : 'Prix sur demande';
-    vpPrice.innerHTML = v.price ? (v.price + '<small>' + v.unit + '</small>') : ('<small>' + noPriceLabel + '</small>');
+    var eurLine = ACT_EXTRAS.eurText(v);
+    vpPrice.innerHTML = v.price ? (v.price + '<small>' + v.unit + '</small>' + (eurLine ? '<span class="act-eur">' + eurLine + '</span>' : '')) : ('<small>' + noPriceLabel + '</small>');
+    var vpFlags = document.getElementById('vpFlags');
+    if(vpFlags) vpFlags.innerHTML = ACT_EXTRAS.flagsHtml(v);
     var msg = window.I18N ? I18N.cardMsg(v.name, v.mode) : ('Bonjour Auto-Connect Teranga, le véhicule ' + v.name + ' (' + badgeLabel.toLowerCase() + ') m’intéresse.');
+    var unavailable = ACT_EXTRAS.isUnavailable(v);
+    vpContact.disabled = unavailable;
+    vpContact.classList.toggle('vp-contact-off', unavailable);
+    if(unavailable) vpContact.textContent = ACT_EXTRAS.statusLabel(v);
+    else vpContact.textContent = window.I18N ? I18N.t('vp.contact') : 'Contacter';
     vpContact.onclick = function(){
       var number = WA_NUMBERS[Math.floor(Math.random() * WA_NUMBERS.length)];
+      ACT_EXTRAS.track(v.slug, 'waClicks');
       openWhatsApp(number, msg);
     };
   }
@@ -1005,6 +1020,7 @@
     var v = VEHICLES[index];
     if(!v) return;
     vpCurrentIndex = index;
+    ACT_EXTRAS.track(vehicleSlug(v, index), 'views');
     renderVehiclePageMeta(v);
     var loadingLabel = window.I18N ? I18N.t('vp.loading') : 'Chargement des photos…';
     vpGallery.innerHTML = v.thumb ?
@@ -1206,8 +1222,15 @@
     if(grid) grid.innerHTML = '<p style="color:var(--muted); padding:24px; text-align:center; grid-column:1/-1;">Chargement des véhicules…</p>';
   })();
 
+  window.ACT_initReviews = function(list){
+    // Tant qu'aucun avis n'est publié depuis l'admin, on garde les avis par défaut.
+    if(!list || !list.length) return;
+    TESTIMONIALS = list;
+    renderTestimonials();
+  };
+
   window.ACT_initVehicles = function(list){
-    VEHICLES = list || [];
+    VEHICLES = ACT_EXTRAS.sortVehicles(list || []);
     renderVehicles();
     renderBrandGrid();
     applyFilters();
@@ -1321,8 +1344,23 @@
           if(window.ACT_vehiclesLoadError) window.ACT_vehiclesLoadError();
         });
     }
-    if(window.ACT_FB) start();
-    else window.addEventListener('act-firebase-ready', start, { once: true });
+    function loadReviews(){
+      var FB = window.ACT_FB;
+      FB.getDocs(FB.query(FB.collection(FB.db, 'reviews'), FB.orderBy('createdAt', 'desc')))
+        .then(function(snap){
+          var list = [];
+          snap.forEach(function(d){
+            var r = d.data();
+            if(r.visible === false) return;
+            list.push({ name: r.name || '', text: r.text || '', rating: r.rating || 0, context: r.context || '' });
+          });
+          if(window.ACT_initReviews) window.ACT_initReviews(list);
+        })
+        .catch(function(err){ console.warn('Avis non chargés :', err); });
+    }
+    function boot(){ start(); loadReviews(); }
+    if(window.ACT_FB) boot();
+    else window.addEventListener('act-firebase-ready', boot, { once: true });
   })();
 </script>
 </body>

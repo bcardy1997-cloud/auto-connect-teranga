@@ -157,6 +157,48 @@
   .toast.error{border-color:rgba(201,82,74,.5); color:#f2a39d;}
 
   #gateLoading{min-height:100vh; display:flex; align-items:center; justify-content:center; color:var(--muted);}
+  /* ---------- extras ---------- */
+  .tabs{display:flex; gap:6px; padding:18px 0 0;}
+  .tab{background:transparent; border:none; color:var(--muted); font-size:15px; font-weight:600; padding:10px 16px; border-radius:999px; cursor:pointer;}
+  .tab.active{background:var(--panel2); color:var(--gold);}
+  .toolbar-right{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+  .search{max-width:240px; padding:9px 12px; font-size:14px;}
+  .vcard-admin .flags{position:absolute; top:8px; right:8px; display:flex; flex-direction:column; gap:4px; align-items:flex-end;}
+  .flag{font-size:10.5px; font-weight:700; padding:3px 8px; border-radius:999px; background:#1b1f24; color:var(--gold); border:1px solid var(--gold);}
+  .flag.new{background:#e8f4ee; color:#14513f; border-color:#e8f4ee;}
+  .flag.reserve{background:#c98b24; color:#1a1204; border-color:#c98b24;}
+  .flag.vendu{background:#b3453d; color:#fff; border-color:#b3453d;}
+  .vcard-admin.is-sold .thumb{filter:grayscale(1) brightness(.75);}
+  .stats-line{display:flex; gap:12px; font-size:12.5px; color:var(--muted);}
+  .stats-line b{color:var(--text);}
+  .status-quick{padding:7px 10px; font-size:13px; margin-top:4px;}
+  .row-btns{flex-wrap:wrap;}
+  .row-btns .btn{min-width:0;}
+  .check-row{display:flex; gap:22px; flex-wrap:wrap; margin-top:16px;}
+  .check-row label{display:flex; align-items:center; gap:8px; color:var(--text); font-size:14px; margin:0; cursor:pointer;}
+  .check-row input{width:auto;}
+  .photo-item .mv{
+    position:absolute; bottom:4px; width:22px; height:22px; border-radius:50%; border:none;
+    background:rgba(10,12,16,.75); color:#fff; font-size:11px; cursor:pointer; line-height:1;
+  }
+  .photo-item .mv.l{left:4px;} .photo-item .mv.r{right:4px;}
+  .photo-item .cover{
+    position:absolute; top:4px; left:4px; background:var(--gold); color:#1a140a; font-size:9px; max-width:56px;
+    font-weight:700; padding:2px 5px; border-radius:999px;
+  }
+  .rlist{display:flex; flex-direction:column; gap:12px; padding-bottom:60px;}
+  .rcard{background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px; display:flex; gap:14px; align-items:flex-start; justify-content:space-between;}
+  .rcard.hidden-r{opacity:.55;}
+  .rcard .stars{color:var(--gold); letter-spacing:2px; font-size:14px;}
+  .rcard .who{font-weight:700; font-size:14.5px;}
+  .rcard .ctx{color:var(--muted); font-size:12.5px;}
+  .rcard p{margin:6px 0 0; font-size:14px; line-height:1.5;}
+  .rcard .rbtns{display:flex; gap:8px; flex-shrink:0; flex-wrap:wrap; justify-content:flex-end;}
+  .link-btn{background:none; border:none; color:var(--muted); font-size:13px; text-decoration:underline; cursor:pointer; margin-top:14px; width:auto !important; padding:0 !important;}
+  .link-btn:hover{color:var(--gold);}
+  .notice{background:rgba(231,172,70,.1); border:1px solid rgba(231,172,70,.35); color:var(--gold); border-radius:8px; padding:10px 12px; font-size:13px; margin-top:14px; display:none;}
+  .notice.show{display:block;}
+  .login-card .notice{color:#9bd8c0; background:rgba(57,148,120,.12); border-color:rgba(57,148,120,.4);}
 </style>
 </head>
 <body>
@@ -173,7 +215,9 @@
       <label for="loginPassword">Mot de passe</label>
       <input type="password" id="loginPassword" autocomplete="current-password" required>
       <div class="error-msg" id="loginError"></div>
+      <div class="notice" id="loginNotice"></div>
       <button type="submit" class="btn btn-gold" id="loginSubmit">Se connecter</button>
+      <button type="button" class="link-btn" id="forgotBtn">Mot de passe oublié ?</button>
     </form>
   </div>
 </div>
@@ -190,11 +234,32 @@
   </div>
 
   <div class="wrap">
-    <div class="toolbar">
-      <h2>Véhicules <span class="count" id="vCount"></span></h2>
-      <button class="btn btn-gold" id="addBtn">+ Ajouter un véhicule</button>
+    <div class="tabs">
+      <button class="tab active" id="tabVehicles">Véhicules</button>
+      <button class="tab" id="tabReviews">Avis clients</button>
     </div>
-    <div id="listArea"></div>
+
+    <div id="paneVehicles">
+      <div class="toolbar">
+        <h2>Véhicules <span class="count" id="vCount"></span></h2>
+        <div class="toolbar-right">
+          <input type="text" id="searchBox" class="search" placeholder="Rechercher…">
+          <button class="btn btn-outline" id="backupBtn" title="Télécharger une copie de toutes vos données">Sauvegarde</button>
+          <button class="btn btn-gold" id="addBtn">+ Ajouter un véhicule</button>
+        </div>
+      </div>
+      <div id="listArea"></div>
+    </div>
+
+    <div id="paneReviews" style="display:none">
+      <div class="toolbar">
+        <h2>Avis clients <span class="count" id="rCount"></span></h2>
+        <div class="toolbar-right">
+          <button class="btn btn-gold" id="addReviewBtn">+ Ajouter un avis</button>
+        </div>
+      </div>
+      <div id="reviewsArea"></div>
+    </div>
   </div>
 </div>
 
@@ -234,6 +299,21 @@
           <label><input type="radio" name="fMode" value="location"> À louer</label>
         </div>
       </fieldset>
+
+      <div class="field-row">
+        <div>
+          <label for="fStatus">Statut</label>
+          <select id="fStatus">
+            <option value="disponible">Disponible</option>
+            <option value="reserve">Réservé</option>
+            <option value="vendu">Vendu / Loué</option>
+          </select>
+        </div>
+        <div class="check-row" style="margin-top:34px">
+          <label><input type="checkbox" id="fFeatured"> ★ À la une</label>
+          <label><input type="checkbox" id="fNew"> Nouveau (3 semaines)</label>
+        </div>
+      </div>
 
       <div class="field-row3">
         <div>
@@ -291,13 +371,56 @@
         <span id="uploadZoneLabel">Cliquez ou déposez des photos / vidéos ici</span>
         <input type="file" id="fileInput" accept="image/*,video/*" multiple>
       </label>
-      <p class="hint" id="photoHint">Au moins 1 photo est requise.</p>
+      <p class="hint" id="photoHint">Au moins 1 photo est requise. La première photo est la photo de couverture : utilisez ◀ ▶ pour réorganiser.</p>
 
       <div class="form-error" id="formError"></div>
 
       <div class="modal-actions">
         <button type="button" class="btn btn-outline" id="cancelBtn">Annuler</button>
         <button type="submit" class="btn btn-gold" id="saveBtn">Enregistrer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="reviewOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="reviewTitle">Ajouter un avis</h2>
+      <button class="modal-close" id="reviewClose">&times;</button>
+    </div>
+    <form id="reviewForm">
+      <div class="field-row">
+        <div>
+          <label for="rName">Nom du client</label>
+          <input type="text" id="rName" required placeholder="ex: Moussa D.">
+        </div>
+        <div>
+          <label for="rContext">Contexte (facultatif)</label>
+          <input type="text" id="rContext" placeholder="ex: Transfert AIBD → Dakar">
+        </div>
+      </div>
+      <div class="field-row">
+        <div>
+          <label for="rRating">Note</label>
+          <select id="rRating">
+            <option value="5">★★★★★ (5)</option>
+            <option value="4">★★★★☆ (4)</option>
+            <option value="3">★★★☆☆ (3)</option>
+            <option value="2">★★☆☆☆ (2)</option>
+            <option value="1">★☆☆☆☆ (1)</option>
+          </select>
+        </div>
+        <div class="check-row" style="margin-top:34px">
+          <label><input type="checkbox" id="rVisible" checked> Visible sur le site</label>
+        </div>
+      </div>
+      <label for="rText">Avis</label>
+      <textarea id="rText" rows="4" required placeholder="Le texte de l'avis du client"></textarea>
+      <div class="form-error" id="reviewError"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" id="reviewCancel">Annuler</button>
+        <button type="submit" class="btn btn-gold" id="reviewSave">Enregistrer</button>
       </div>
     </form>
   </div>
@@ -329,7 +452,8 @@
       loginView.style.display = 'none';
       dashboardView.style.display = 'block';
       whoami.textContent = user.email;
-      loadVehicles();
+      try { localStorage.setItem('act_admin', '1'); } catch(e){}
+      loadAll();
     } else if(user){
       // Compte authentifié mais pas autorisé : on déconnecte immédiatement.
       FB.signOut(auth);
@@ -359,6 +483,7 @@
     FB.signInWithEmailAndPassword(auth, email, password).catch(function(err){
       var msg = 'Email ou mot de passe incorrect.';
       if(err && err.code === 'auth/too-many-requests') msg = 'Trop de tentatives, réessayez dans un instant.';
+      if(err && err.code) msg += ' (' + err.code + ')';
       showLoginError(msg);
     }).finally(function(){
       btn.disabled = false;
@@ -367,7 +492,27 @@
   });
 
   document.getElementById('logoutBtn').addEventListener('click', function(){
+    try { localStorage.removeItem('act_admin'); } catch(e){}
     FB.signOut(auth);
+  });
+
+  // Mot de passe oublié : envoie un lien de réinitialisation à l'adresse saisie.
+  var loginNotice = document.getElementById('loginNotice');
+  document.getElementById('forgotBtn').addEventListener('click', function(){
+    loginError.classList.remove('show');
+    loginNotice.classList.remove('show');
+    var email = document.getElementById('loginEmail').value.trim();
+    if(!email){ showLoginError('Saisissez d\'abord votre adresse email ci-dessus.'); return; }
+    if(window.ACT_CONFIG.adminEmails.indexOf(email) === -1){
+      showLoginError('Cette adresse n\'est pas autorisée.');
+      return;
+    }
+    FB.sendPasswordResetEmail(auth, email).then(function(){
+      loginNotice.textContent = 'Un email de réinitialisation a été envoyé à ' + email + ' (pensez à vérifier les courriers indésirables).';
+      loginNotice.classList.add('show');
+    }).catch(function(err){
+      showLoginError('Envoi impossible. (' + (err && err.code ? err.code : 'erreur') + ')');
+    });
   });
 
   // ---------- toast ----------
@@ -380,48 +525,108 @@
     toastTimer = setTimeout(function(){ toastEl.className = 'toast'; }, 3500);
   }
 
-  // ---------- list ----------
+  // ---------- données ----------
   var listArea = document.getElementById('listArea');
   var vCount = document.getElementById('vCount');
+  var searchBox = document.getElementById('searchBox');
   var currentVehicles = [];
+  var statsBySlug = {};
+  var currentReviews = [];
+  var NEW_DAYS = 21;
+
+  function norm(s){
+    return String(s == null ? '' : s).normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  }
+  function escapeHtml(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+  }
+  function tsMillis(t){
+    if(t && typeof t.toMillis === 'function') return t.toMillis();
+    return typeof t === 'number' ? t : 0;
+  }
+  function statusOf(v){ return (v.status === 'reserve' || v.status === 'vendu') ? v.status : 'disponible'; }
+  function isNewNow(v){ return !!(v.newUntil && Number(v.newUntil) > Date.now()); }
+
+  function loadAll(){
+    loadVehicles();
+    loadReviews();
+  }
 
   function loadVehicles(){
     listArea.innerHTML = '<p style="color:var(--muted)">Chargement des véhicules…</p>';
     var q = FB.query(FB.collection(db, 'vehicles'), FB.orderBy('createdAt', 'asc'));
-    FB.getDocs(q).then(function(snap){
-      currentVehicles = snap.docs.map(function(d){
+    // Les statistiques sont facultatives : une erreur ne bloque pas la liste.
+    var statsP = FB.getDocs(FB.collection(db, 'stats')).then(function(snap){
+      var m = {};
+      snap.docs.forEach(function(d){ m[d.id] = d.data(); });
+      return m;
+    }).catch(function(){ return {}; });
+    Promise.all([FB.getDocs(q), statsP]).then(function(res){
+      currentVehicles = res[0].docs.map(function(d){
         var v = d.data();
         v._id = d.id;
         return v;
       });
+      statsBySlug = res[1];
       renderList();
     }).catch(function(err){
-      listArea.innerHTML = '<div class="empty-state">Impossible de charger les véhicules.<br>' + (err && err.message ? err.message : '') + '</div>';
+      listArea.innerHTML = '<div class="empty-state">Impossible de charger les véhicules.<br>' + escapeHtml(err && err.message ? err.message : '') + '</div>';
     });
   }
 
+  searchBox.addEventListener('input', renderList);
+
   function renderList(){
-    vCount.textContent = '(' + currentVehicles.length + ')';
+    var term = norm(searchBox.value.trim());
+    var shown = currentVehicles.filter(function(v){
+      if(!term) return true;
+      var hay = norm([v.name, v.brand, v.year, v.colorName, v.note, v.slug].join(' '));
+      return term.split(/\s+/).every(function(t){ return hay.indexOf(t) !== -1; });
+    });
+    vCount.textContent = '(' + (term ? shown.length + ' / ' : '') + currentVehicles.length + ')';
     if(!currentVehicles.length){
       listArea.innerHTML = '<div class="empty-state">Aucun véhicule pour l\'instant. Cliquez sur « + Ajouter un véhicule ».</div>';
       return;
     }
+    if(!shown.length){
+      listArea.innerHTML = '<div class="empty-state">Aucun véhicule ne correspond à « ' + escapeHtml(searchBox.value) + ' ».</div>';
+      return;
+    }
     var html = '<div class="vgrid">';
-    currentVehicles.forEach(function(v){
+    shown.forEach(function(v){
       var thumb = (v.photos && v.photos[0]) ? window.ACT_cldThumb(v.photos[0], 400) : '';
       var badgeClass = v.mode === 'vente' ? 'sale' : 'rent';
       var badgeLabel = v.mode === 'vente' ? 'À vendre' : 'À louer';
+      var st = statusOf(v);
+      var st2 = statsBySlug[v.slug] || {};
+      var flags = '';
+      if(st === 'reserve') flags += '<span class="flag reserve">Réservé</span>';
+      if(st === 'vendu') flags += '<span class="flag vendu">' + (v.mode === 'location' ? 'Loué' : 'Vendu') + '</span>';
+      if(v.featured) flags += '<span class="flag">★ À la une</span>';
+      if(isNewNow(v)) flags += '<span class="flag new">Nouveau</span>';
       html += '' +
-        '<div class="vcard-admin" data-id="' + v._id + '">' +
-          '<div class="thumb" style="' + (thumb ? 'background-image:url(\'' + thumb + '\')' : '') + '">' +
+        '<div class="vcard-admin' + (st === 'vendu' ? ' is-sold' : '') + '" data-id="' + escapeHtml(v._id) + '">' +
+          '<div class="thumb" style="' + (thumb ? 'background-image:url(\'' + escapeHtml(thumb) + '\')' : '') + '">' +
             '<span class="badge ' + badgeClass + '">' + badgeLabel + '</span>' +
+            (flags ? '<div class="flags">' + flags + '</div>' : '') +
           '</div>' +
           '<div class="body">' +
             '<h3>' + escapeHtml(v.name || '') + '</h3>' +
             '<div class="meta">' + escapeHtml(v.brand || '') + ' · ' + escapeHtml(v.year || '') + '</div>' +
             (v.price ? '<div class="price">' + escapeHtml(v.price) + ' ' + escapeHtml(v.unit || '') + '</div>' : '<div class="meta">Prix sur demande</div>') +
+            '<div class="stats-line" title="Visiteurs publics uniquement (vos propres visites connectées ne sont pas comptées)">' +
+              '<span>👁 <b>' + (st2.views || 0) + '</b> visites</span><span>💬 <b>' + (st2.waClicks || 0) + '</b> WhatsApp</span>' +
+            '</div>' +
+            '<select class="status-quick" aria-label="Statut">' +
+              '<option value="disponible"' + (st === 'disponible' ? ' selected' : '') + '>Disponible</option>' +
+              '<option value="reserve"' + (st === 'reserve' ? ' selected' : '') + '>Réservé</option>' +
+              '<option value="vendu"' + (st === 'vendu' ? ' selected' : '') + '>' + (v.mode === 'location' ? 'Loué' : 'Vendu') + '</option>' +
+            '</select>' +
             '<div class="row-btns">' +
               '<button class="btn btn-outline btn-sm edit-btn">Modifier</button>' +
+              '<button class="btn btn-outline btn-sm dup-btn" title="Créer une nouvelle annonce à partir de celle-ci">Dupliquer</button>' +
               '<button class="btn btn-danger btn-sm del-btn">Supprimer</button>' +
             '</div>' +
           '</div>' +
@@ -430,20 +635,36 @@
     html += '</div>';
     listArea.innerHTML = html;
 
+    function vehicleFor(el){
+      var id = el.closest('.vcard-admin').getAttribute('data-id');
+      return currentVehicles.find(function(x){ return x._id === id; });
+    }
     listArea.querySelectorAll('.edit-btn').forEach(function(btn){
-      btn.addEventListener('click', function(){
-        var id = btn.closest('.vcard-admin').getAttribute('data-id');
-        var v = currentVehicles.find(function(x){ return x._id === id; });
-        if(v) openForm(v);
+      btn.addEventListener('click', function(){ var v = vehicleFor(btn); if(v) openForm(v, false); });
+    });
+    listArea.querySelectorAll('.dup-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){ var v = vehicleFor(btn); if(v) openForm(v, true); });
+    });
+    listArea.querySelectorAll('.status-quick').forEach(function(sel){
+      sel.addEventListener('change', function(){
+        var v = vehicleFor(sel);
+        if(!v) return;
+        FB.updateDoc(FB.doc(db, 'vehicles', v._id), { status: sel.value, updatedAt: FB.serverTimestamp() }).then(function(){
+          v.status = sel.value;
+          toast('Statut mis à jour.');
+          renderList();
+        }).catch(function(err){
+          toast('Erreur : ' + err.message, true);
+          renderList();
+        });
       });
     });
     listArea.querySelectorAll('.del-btn').forEach(function(btn){
       btn.addEventListener('click', function(){
-        var id = btn.closest('.vcard-admin').getAttribute('data-id');
-        var v = currentVehicles.find(function(x){ return x._id === id; });
+        var v = vehicleFor(btn);
         if(!v) return;
         if(!confirm('Supprimer définitivement « ' + v.name + ' » ? Cette action est irréversible.')) return;
-        FB.deleteDoc(FB.doc(db, 'vehicles', id)).then(function(){
+        FB.deleteDoc(FB.doc(db, 'vehicles', v._id)).then(function(){
           toast('Véhicule supprimé.');
           loadVehicles();
         }).catch(function(err){
@@ -453,27 +674,35 @@
     });
   }
 
-  function escapeHtml(s){
-    return String(s).replace(/[&<>"']/g, function(c){
-      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
-    });
+  // ---------- onglets ----------
+  var tabVehicles = document.getElementById('tabVehicles');
+  var tabReviews = document.getElementById('tabReviews');
+  function showTab(which){
+    var rev = which === 'reviews';
+    document.getElementById('paneVehicles').style.display = rev ? 'none' : 'block';
+    document.getElementById('paneReviews').style.display = rev ? 'block' : 'none';
+    tabVehicles.classList.toggle('active', !rev);
+    tabReviews.classList.toggle('active', rev);
   }
+  tabVehicles.addEventListener('click', function(){ showTab('vehicles'); });
+  tabReviews.addEventListener('click', function(){ showTab('reviews'); });
 
-  // ---------- form / modal ----------
+  // ---------- formulaire véhicule ----------
   var modalOverlay = document.getElementById('modalOverlay');
   var modalTitle = document.getElementById('modalTitle');
-  var vehicleForm = document.getElementById('vehicleForm');
   var formError = document.getElementById('formError');
   var photoGrid = document.getElementById('photoGrid');
-  var currentPhotos = []; // { url, type: 'image'|'video' }
+  var currentPhotos = []; // { url, type: 'image'|'video', uploading? }
   var editingId = null;
+  var editingNewUntil = 0;
 
-  function openForm(v){
+  function openForm(v, duplicate){
     formError.classList.remove('show');
-    editingId = v ? v._id : null;
-    modalTitle.textContent = v ? 'Modifier le véhicule' : 'Ajouter un véhicule';
+    editingId = (v && !duplicate) ? v._id : null;
+    editingNewUntil = (v && !duplicate && v.newUntil) ? Number(v.newUntil) : 0;
+    modalTitle.textContent = duplicate ? 'Dupliquer le véhicule' : (v ? 'Modifier le véhicule' : 'Ajouter un véhicule');
     document.getElementById('fId').value = editingId || '';
-    document.getElementById('fName').value = v ? v.name || '' : '';
+    document.getElementById('fName').value = v ? (v.name || '') + (duplicate ? ' (copie)' : '') : '';
     document.getElementById('fBrand').value = v ? v.brand || '' : '';
     document.getElementById('fType').value = v ? v.type || 'sedan' : 'sedan';
     document.querySelectorAll('input[name=fMode]').forEach(function(r){ r.checked = (r.value === (v ? v.mode : 'vente')); });
@@ -485,6 +714,10 @@
     document.getElementById('fNote').value = v ? v.note || '' : '';
     document.getElementById('fPrice').value = v ? v.price || '' : '';
     document.getElementById('fUnit').value = v ? (v.unit || 'M FCFA') : 'M FCFA';
+    document.getElementById('fStatus').value = (v && !duplicate) ? statusOf(v) : 'disponible';
+    document.getElementById('fFeatured').checked = !!(v && !duplicate && v.featured);
+    // Un nouveau véhicule (ou un duplicata) est « Nouveau » par défaut.
+    document.getElementById('fNew').checked = (v && !duplicate) ? isNewNow(v) : true;
 
     currentPhotos = [];
     if(v && v.photos){ v.photos.forEach(function(u){ currentPhotos.push({ url: u, type: 'image' }); }); }
@@ -497,30 +730,63 @@
   function closeForm(){
     modalOverlay.classList.remove('show');
   }
-  document.getElementById('addBtn').addEventListener('click', function(){ openForm(null); });
+  document.getElementById('addBtn').addEventListener('click', function(){ openForm(null, false); });
   document.getElementById('modalClose').addEventListener('click', closeForm);
   document.getElementById('cancelBtn').addEventListener('click', closeForm);
   modalOverlay.addEventListener('click', function(e){ if(e.target === modalOverlay) closeForm(); });
 
+  function movePhoto(item, delta){
+    var i = currentPhotos.indexOf(item);
+    var j = i + delta;
+    if(i < 0 || j < 0 || j >= currentPhotos.length) return;
+    currentPhotos.splice(i, 1);
+    currentPhotos.splice(j, 0, item);
+    renderPhotoGrid();
+  }
+
   function renderPhotoGrid(){
     photoGrid.innerHTML = '';
-    currentPhotos.forEach(function(p, i){
+    var firstImage = true;
+    currentPhotos.forEach(function(p){
       var item = document.createElement('div');
       item.className = 'photo-item';
+      if(p.uploading){
+        item.innerHTML = '<div class="uploading"><span class="spinner"></span></div>';
+        photoGrid.appendChild(item);
+        return;
+      }
       if(p.type === 'video'){
-        item.innerHTML = '<video src="' + p.url + '" muted></video>';
+        item.innerHTML = '<video src="' + escapeHtml(p.url) + '" muted></video>';
       } else {
-        item.innerHTML = '<img src="' + window.ACT_cldThumb(p.url, 200) + '" alt="">';
+        item.innerHTML = '<img src="' + escapeHtml(window.ACT_cldThumb(p.url, 200)) + '" alt="">';
+        if(firstImage){
+          var cv = document.createElement('span');
+          cv.className = 'cover';
+          cv.textContent = 'Couverture';
+          item.appendChild(cv);
+          firstImage = false;
+        }
       }
       var rm = document.createElement('button');
       rm.type = 'button';
       rm.className = 'rm';
       rm.textContent = '✕';
+      rm.setAttribute('aria-label', 'Retirer');
       rm.addEventListener('click', function(){
-        currentPhotos.splice(i, 1);
+        var i = currentPhotos.indexOf(p);
+        if(i >= 0) currentPhotos.splice(i, 1);
         renderPhotoGrid();
       });
       item.appendChild(rm);
+
+      var l = document.createElement('button');
+      l.type = 'button'; l.className = 'mv l'; l.textContent = '◀'; l.setAttribute('aria-label', 'Déplacer avant');
+      l.addEventListener('click', function(){ movePhoto(p, -1); });
+      var r = document.createElement('button');
+      r.type = 'button'; r.className = 'mv r'; r.textContent = '▶'; r.setAttribute('aria-label', 'Déplacer après');
+      r.addEventListener('click', function(){ movePhoto(p, 1); });
+      item.appendChild(l);
+      item.appendChild(r);
       photoGrid.appendChild(item);
     });
   }
@@ -540,27 +806,22 @@
   function handleFiles(fileList){
     Array.prototype.slice.call(fileList).forEach(function(file){
       var isVideo = file.type.indexOf('video') === 0;
-      var placeholderIndex = currentPhotos.length;
-      currentPhotos.push({ url: '', type: isVideo ? 'video' : 'image', uploading: true });
-      renderUploadingPlaceholder(placeholderIndex, file);
+      var entry = { url: '', type: isVideo ? 'video' : 'image', uploading: true };
+      currentPhotos.push(entry);
+      renderPhotoGrid();
       window.ACT_cldUpload(file).then(function(res){
-        currentPhotos[placeholderIndex] = { url: res.url, type: res.resourceType };
+        // On retrouve l'élément par identité : l'ordre a pu changer entre-temps.
+        entry.url = res.url;
+        entry.type = res.resourceType;
+        entry.uploading = false;
         renderPhotoGrid();
       }).catch(function(err){
-        currentPhotos.splice(placeholderIndex, 1);
+        var i = currentPhotos.indexOf(entry);
+        if(i >= 0) currentPhotos.splice(i, 1);
         renderPhotoGrid();
         toast('Échec de l\'upload : ' + err.message, true);
       });
     });
-  }
-
-  function renderUploadingPlaceholder(index, file){
-    renderPhotoGrid();
-    // Ajoute un overlay "en cours" sur le dernier item ajouté.
-    var items = photoGrid.children;
-    var item = items[index];
-    if(!item) return;
-    item.innerHTML = '<div class="uploading"><span class="spinner"></span></div>';
   }
 
   document.getElementById('vehicleForm').addEventListener('submit', function(e){
@@ -588,12 +849,21 @@
       return;
     }
 
+    // « Nouveau » : on garde la date d'expiration existante tant qu'elle court ; sinon 3 semaines à partir d'aujourd'hui.
+    var newUntil = 0;
+    if(document.getElementById('fNew').checked){
+      newUntil = (editingNewUntil > Date.now()) ? editingNewUntil : Date.now() + NEW_DAYS * 86400000;
+    }
+
     var mode = document.querySelector('input[name=fMode]:checked').value;
     var data = {
       name: name,
       brand: brand,
       type: document.getElementById('fType').value,
       mode: mode,
+      status: document.getElementById('fStatus').value,
+      featured: document.getElementById('fFeatured').checked,
+      newUntil: newUntil,
       year: document.getElementById('fYear').value.trim() || '–',
       gearbox: document.getElementById('fGearbox').value,
       seats: parseInt(document.getElementById('fSeats').value, 10) || 5,
@@ -635,7 +905,7 @@
   });
 
   function uniqueSlug(name){
-    var base = slugify(name);
+    var base = slugify(name) || 'vehicule';
     var existing = currentVehicles.map(function(v){ return v.slug; });
     var slug = base, n = 2;
     while(existing.indexOf(slug) !== -1){
@@ -644,6 +914,182 @@
     }
     return slug;
   }
+
+  // ---------- avis clients ----------
+  var reviewsArea = document.getElementById('reviewsArea');
+  var rCount = document.getElementById('rCount');
+  var reviewOverlay = document.getElementById('reviewOverlay');
+  var reviewError = document.getElementById('reviewError');
+  var editingReviewId = null;
+
+  function loadReviews(){
+    reviewsArea.innerHTML = '<p style="color:var(--muted)">Chargement des avis…</p>';
+    FB.getDocs(FB.query(FB.collection(db, 'reviews'), FB.orderBy('createdAt', 'desc'))).then(function(snap){
+      currentReviews = snap.docs.map(function(d){ var r = d.data(); r._id = d.id; return r; });
+      renderReviews();
+    }).catch(function(err){
+      reviewsArea.innerHTML = '<div class="empty-state">Impossible de charger les avis.<br>' + escapeHtml(err && err.message ? err.message : '') +
+        '<br><small>Avez-vous bien republié les règles Firestore (fichier firestore.rules) ?</small></div>';
+    });
+  }
+
+  function starsText(n){
+    n = Math.max(0, Math.min(5, parseInt(n, 10) || 0));
+    return new Array(n + 1).join('★') + new Array(6 - n).join('☆');
+  }
+
+  function renderReviews(){
+    rCount.textContent = '(' + currentReviews.length + ')';
+    if(!currentReviews.length){
+      reviewsArea.innerHTML = '<div class="empty-state">Aucun avis pour l\'instant. Cliquez sur « + Ajouter un avis ».<br><small>Tant qu\'aucun avis n\'est publié ici, le site affiche ses avis par défaut.</small></div>';
+      return;
+    }
+    var html = '<div class="rlist">';
+    currentReviews.forEach(function(r){
+      var hidden = r.visible === false;
+      html += '' +
+        '<div class="rcard' + (hidden ? ' hidden-r' : '') + '" data-id="' + escapeHtml(r._id) + '">' +
+          '<div>' +
+            '<div class="stars">' + starsText(r.rating) + '</div>' +
+            '<div class="who">' + escapeHtml(r.name || '') + (hidden ? ' <span class="ctx">(masqué)</span>' : '') + '</div>' +
+            (r.context ? '<div class="ctx">' + escapeHtml(r.context) + '</div>' : '') +
+            '<p>' + escapeHtml(r.text || '') + '</p>' +
+          '</div>' +
+          '<div class="rbtns">' +
+            '<button class="btn btn-outline btn-sm r-vis">' + (hidden ? 'Afficher' : 'Masquer') + '</button>' +
+            '<button class="btn btn-outline btn-sm r-edit">Modifier</button>' +
+            '<button class="btn btn-danger btn-sm r-del">Supprimer</button>' +
+          '</div>' +
+        '</div>';
+    });
+    html += '</div>';
+    reviewsArea.innerHTML = html;
+
+    function reviewFor(el){
+      var id = el.closest('.rcard').getAttribute('data-id');
+      return currentReviews.find(function(x){ return x._id === id; });
+    }
+    reviewsArea.querySelectorAll('.r-edit').forEach(function(b){
+      b.addEventListener('click', function(){ var r = reviewFor(b); if(r) openReviewForm(r); });
+    });
+    reviewsArea.querySelectorAll('.r-vis').forEach(function(b){
+      b.addEventListener('click', function(){
+        var r = reviewFor(b);
+        if(!r) return;
+        var nv = r.visible === false;
+        FB.updateDoc(FB.doc(db, 'reviews', r._id), { visible: nv }).then(function(){
+          r.visible = nv;
+          renderReviews();
+          toast(nv ? 'Avis affiché sur le site.' : 'Avis masqué.');
+        }).catch(function(err){ toast('Erreur : ' + err.message, true); });
+      });
+    });
+    reviewsArea.querySelectorAll('.r-del').forEach(function(b){
+      b.addEventListener('click', function(){
+        var r = reviewFor(b);
+        if(!r) return;
+        if(!confirm('Supprimer définitivement l\'avis de « ' + (r.name || '') + ' » ?')) return;
+        FB.deleteDoc(FB.doc(db, 'reviews', r._id)).then(function(){
+          toast('Avis supprimé.');
+          loadReviews();
+        }).catch(function(err){ toast('Erreur : ' + err.message, true); });
+      });
+    });
+  }
+
+  function openReviewForm(r){
+    reviewError.classList.remove('show');
+    editingReviewId = r ? r._id : null;
+    document.getElementById('reviewTitle').textContent = r ? 'Modifier l\'avis' : 'Ajouter un avis';
+    document.getElementById('rName').value = r ? r.name || '' : '';
+    document.getElementById('rContext').value = r ? r.context || '' : '';
+    document.getElementById('rRating').value = String(r ? (parseInt(r.rating, 10) || 5) : 5);
+    document.getElementById('rText').value = r ? r.text || '' : '';
+    document.getElementById('rVisible').checked = r ? r.visible !== false : true;
+    reviewOverlay.classList.add('show');
+  }
+  function closeReviewForm(){ reviewOverlay.classList.remove('show'); }
+  document.getElementById('addReviewBtn').addEventListener('click', function(){ openReviewForm(null); });
+  document.getElementById('reviewClose').addEventListener('click', closeReviewForm);
+  document.getElementById('reviewCancel').addEventListener('click', closeReviewForm);
+  reviewOverlay.addEventListener('click', function(e){ if(e.target === reviewOverlay) closeReviewForm(); });
+
+  document.getElementById('reviewForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    reviewError.classList.remove('show');
+    var data = {
+      name: document.getElementById('rName').value.trim(),
+      context: document.getElementById('rContext').value.trim(),
+      rating: parseInt(document.getElementById('rRating').value, 10) || 5,
+      text: document.getElementById('rText').value.trim(),
+      visible: document.getElementById('rVisible').checked
+    };
+    if(!data.name || !data.text){
+      reviewError.textContent = 'Le nom et le texte de l\'avis sont obligatoires.';
+      reviewError.classList.add('show');
+      return;
+    }
+    var btn = document.getElementById('reviewSave');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Enregistrement…';
+    var p;
+    if(editingReviewId){
+      p = FB.updateDoc(FB.doc(db, 'reviews', editingReviewId), data);
+    } else {
+      data.createdAt = FB.serverTimestamp();
+      p = FB.addDoc(FB.collection(db, 'reviews'), data);
+    }
+    p.then(function(){
+      toast(editingReviewId ? 'Avis mis à jour.' : 'Avis ajouté.');
+      closeReviewForm();
+      loadReviews();
+    }).catch(function(err){
+      reviewError.textContent = 'Erreur : ' + err.message;
+      reviewError.classList.add('show');
+    }).finally(function(){
+      btn.disabled = false;
+      btn.textContent = 'Enregistrer';
+    });
+  });
+
+  // ---------- sauvegarde JSON ----------
+  function plain(o){
+    var out = {};
+    Object.keys(o).forEach(function(k){
+      if(k === '_id') return;
+      var val = o[k];
+      if(val && typeof val.toMillis === 'function') out[k] = { _timestamp: val.toMillis() };
+      else out[k] = val;
+    });
+    return out;
+  }
+  document.getElementById('backupBtn').addEventListener('click', function(){
+    var btn = this;
+    btn.disabled = true;
+    Promise.all([
+      FB.getDocs(FB.collection(db, 'vehicles')),
+      FB.getDocs(FB.collection(db, 'reviews')),
+      FB.getDocs(FB.collection(db, 'stats')).catch(function(){ return { docs: [] }; })
+    ]).then(function(res){
+      var dump = {
+        exportedAt: new Date().toISOString(),
+        site: 'Auto-Connect Teranga',
+        vehicles: res[0].docs.map(function(d){ var o = plain(d.data()); o._id = d.id; return o; }),
+        reviews: res[1].docs.map(function(d){ var o = plain(d.data()); o._id = d.id; return o; }),
+        stats: res[2].docs.map(function(d){ var o = plain(d.data()); o._id = d.id; return o; })
+      };
+      var blob = new Blob([JSON.stringify(dump, null, 2)], { type: 'application/json' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'auto-connect-sauvegarde-' + new Date().toISOString().slice(0, 10) + '.json';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+      toast('Sauvegarde téléchargée (' + dump.vehicles.length + ' véhicules, ' + dump.reviews.length + ' avis).');
+    }).catch(function(err){
+      toast('Sauvegarde impossible : ' + err.message, true);
+    }).finally(function(){ btn.disabled = false; });
+  });
 </script>
 </body>
 </html>
