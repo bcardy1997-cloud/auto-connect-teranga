@@ -181,10 +181,20 @@ function renderVehiclePageMeta(v){
   }
 
   var noPriceLabel = window.I18N ? I18N.t('vp.no_price') : 'Prix sur demande';
-  vpPrice.innerHTML = v.price ? (v.price + '<small>' + v.unit + '</small>') : ('<small>' + noPriceLabel + '</small>');
+  var X = window.ACT_EXTRAS;
+  var eurLine = X ? X.eurText(v) : '';
+  vpPrice.innerHTML = v.price ? (v.price + '<small>' + v.unit + '</small>' + (eurLine ? '<span class="act-eur">' + eurLine + '</span>' : '')) : ('<small>' + noPriceLabel + '</small>');
+  var vpFlags = document.getElementById('vpFlags');
+  if(vpFlags && X) vpFlags.innerHTML = X.flagsHtml(v);
   var msg = window.I18N ? I18N.cardMsg(v.name, v.mode) : ('Bonjour Auto-Connect Teranga, le véhicule ' + v.name + ' (' + badgeLabel.toLowerCase() + ') m’intéresse.');
+  var unavailable = !!(X && X.isUnavailable(v));
+  vpContact.disabled = unavailable;
+  vpContact.classList.toggle('vp-contact-off', unavailable);
+  if(unavailable) vpContact.textContent = X.statusLabel(v);
+  else vpContact.textContent = window.I18N ? I18N.t('vp.contact') : 'Contacter';
   vpContact.onclick = function(){
     var number = WA_NUMBERS[Math.floor(Math.random() * WA_NUMBERS.length)];
+    if(X) X.track(v.slug, 'waClicks');
     openWhatsApp(number, msg);
   };
 }
