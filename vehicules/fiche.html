@@ -96,6 +96,7 @@
       </div>
       <div class="vp-info">
         <span class="vcard-badge vp-badge" id="vpBadge"></span>
+        <div class="vp-flags" id="vpFlags"></div>
         <h1 id="vpName"></h1>
         <p class="vp-specs" id="vpSpecs"></p>
         <ul class="vp-features" id="vpFeatures"></ul>
@@ -129,6 +130,7 @@
 </a>
 
 <script src="../assets/i18n.js"></script>
+<script src="../assets/act-extras.js"></script>
 <script src="../assets/vehicle-page.js"></script>
 <script src="../assets/act-config.js"></script>
 <script src="../assets/act-cloudinary.js"></script>
@@ -183,7 +185,7 @@
       if(!isNaN(priceNum) && priceNum > 0){
         ld.offers = {
           '@type': 'Offer', url: canonical, priceCurrency: 'XOF', price: String(priceNum),
-          availability: 'https://schema.org/InStock', itemCondition: 'https://schema.org/UsedCondition',
+          availability: (v.status === 'vendu') ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock', itemCondition: 'https://schema.org/UsedCondition',
           businessFunction: v.mode === 'vente' ? 'https://schema.org/Sell' : 'https://schema.org/LeaseOut',
           seller: { '@type': 'Organization', name: 'Auto-Connect Teranga' }
         };
@@ -208,6 +210,7 @@
       setMeta(Object.assign({}, v, { photos: rawPhotos }));
       v.photos = rawPhotos.map(function(u){ return window.ACT_cldThumb(u, 1600); });
       window.initVehiclePage(v);
+      if(window.ACT_EXTRAS) window.ACT_EXTRAS.track(v.slug, 'views');
     }).catch(function(err){
       console.error('Erreur de chargement du véhicule :', err);
       showNotFound();
